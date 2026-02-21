@@ -13,7 +13,8 @@ func Provider() *schema.Provider {
 		Schema: map[string]*schema.Schema{},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"pkcs12_from_pem": resourcePkcs12(),
+			"pkcs12_from_pem":        resourcePkcs12(),
+			"pkcs12_nopass_from_pem": resourcePkcs12Nopass(),
 		},
 		DataSourcesMap:       map[string]*schema.Resource{},
 		ConfigureContextFunc: providerConfigure,

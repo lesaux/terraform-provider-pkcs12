@@ -29,11 +29,30 @@ func resourcePkcs12() *schema.Resource {
 				Description: "Certificate or certificate chain",
 			},
 			"private_key_pem": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Sensitive:   true,
-				ForceNew:    true,
-				Description: "Private Key",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Sensitive:     true,
+				ForceNew:      true,
+				Description:   "Private Key",
+				ConflictsWith: []string{"private_key_pem_wo", "private_key_pem_wo_version"},
+			},
+			"private_key_pem_wo": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Sensitive:     true,
+				ForceNew:      true,
+				WriteOnly:     true,
+				Description:   "Private Key (Write Only)",
+				ConflictsWith: []string{"private_key_pem"},
+				RequiredWith:  []string{"private_key_pem_wo_version"},
+			},
+			"private_key_pem_wo_version": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				Description:   "Private Key Version (Write Only)",
+				ConflictsWith: []string{"private_key_pem"},
+				RequiredWith:  []string{"private_key_pem_wo"},
 			},
 			"private_key_pass": {
 				Type:        schema.TypeString,
@@ -97,7 +116,15 @@ func resourcePkcs12Create(ctx context.Context, d *schema.ResourceData, _ interfa
 	var err error
 	certStr := d.Get("cert_pem").(string)
 	privatekeyStr := d.Get("private_key_pem").(string)
+	if privatekeyStr == "" {
+		privatekeyStr = d.Get("private_key_pem_wo").(string)
+	}
+	if privatekeyStr == "" {
+		return diag.Errorf("one of private_key_pem or private_key_pem_wo must be set")
+	}
+
 	privatekeyPass := d.Get("private_key_pass").(string)
+
 	password := d.Get("password").(string)
 	caStr := d.Get("ca_pem").(string)
 
