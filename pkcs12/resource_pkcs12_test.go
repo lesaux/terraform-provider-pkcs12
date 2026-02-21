@@ -120,6 +120,10 @@ func TestResourcePkcs12Schema_WriteOnlyFieldExists(t *testing.T) {
 	if !woAttr.Sensitive {
 		t.Error("expected private_key_pem_wo to have Sensitive: true")
 	}
+	// SDK forbids WriteOnly + ForceNew together; replacement is driven by _wo_version
+	if woAttr.ForceNew {
+		t.Error("expected private_key_pem_wo to have ForceNew: false (WriteOnly and ForceNew are mutually exclusive)")
+	}
 
 	versionAttr, ok := res.Schema["private_key_pem_wo_version"]
 	if !ok {

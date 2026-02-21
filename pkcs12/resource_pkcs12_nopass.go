@@ -35,7 +35,6 @@ func resourcePkcs12Nopass() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Sensitive:     true,
-				ForceNew:      true,
 				WriteOnly:     true,
 				Description:   "Private Key in PEM format (Write Only, accepts ephemeral values)",
 				ConflictsWith: []string{"private_key_pem"},

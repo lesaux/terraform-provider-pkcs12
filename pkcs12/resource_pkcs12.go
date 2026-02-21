@@ -40,7 +40,6 @@ func resourcePkcs12() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Sensitive:     true,
-				ForceNew:      true,
 				WriteOnly:     true,
 				Description:   "Private Key (Write Only)",
 				ConflictsWith: []string{"private_key_pem"},
