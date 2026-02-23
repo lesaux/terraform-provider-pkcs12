@@ -42,9 +42,19 @@ resource "pkcs12_from_pem" "my_pkcs12" {
   # private_key_pass = "key-pass"
 }
 
+ephemeral "pkcs12_nopass_from_pem" "my_pkcs12_ephemeral" {
+  cert_pem        = tls_self_signed_cert.my_cert.cert_pem
+  private_key_pem = tls_private_key.my_private_key.private_key_pem
+}
+
 resource "local_file" "result" {
   filename = "${path.module}/certificates.p12"
   content_base64     = pkcs12_from_pem.my_pkcs12.result
+}
+
+resource "local_file" "result_ephemeral" {
+  filename = "${path.module}/certificates_ephemeral.p12"
+  content_base64     = ephemeral.pkcs12_nopass_from_pem.my_pkcs12_ephemeral.result
 }
 
 

@@ -19,26 +19,26 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ ephemeral.EphemeralResource = &ephemeralPkcs12Nopass{}
+	_ ephemeral.EphemeralResource = &ephemeralPkcs12{}
 )
 
-// NewEphemeralPkcs12Nopass is a helper function to simplify the provider implementation.
-func NewEphemeralPkcs12Nopass() ephemeral.EphemeralResource {
-	return &ephemeralPkcs12Nopass{}
+// NewEphemeralPkcs12 is a helper function to simplify the provider implementation.
+func NewEphemeralPkcs12() ephemeral.EphemeralResource {
+	return &ephemeralPkcs12{}
 }
 
-// ephemeralPkcs12Nopass is the resource implementation.
-type ephemeralPkcs12Nopass struct{}
+// ephemeralPkcs12 is the resource implementation.
+type ephemeralPkcs12 struct{}
 
 // Metadata returns the ephemeral resource type name.
-func (e *ephemeralPkcs12Nopass) Metadata(_ context.Context, req ephemeral.MetadataRequest, resp *ephemeral.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_nopass_from_pem"
+func (e *ephemeralPkcs12) Metadata(_ context.Context, req ephemeral.MetadataRequest, resp *ephemeral.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_from_pem"
 }
 
 // Schema defines the schema for the ephemeral resource.
-func (e *ephemeralPkcs12Nopass) Schema(_ context.Context, _ ephemeral.SchemaRequest, resp *ephemeral.SchemaResponse) {
+func (e *ephemeralPkcs12) Schema(_ context.Context, _ ephemeral.SchemaRequest, resp *ephemeral.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Creates a PKCS12 file without a password from a certificate and private key.",
+		Description: "Creates a PKCS12 file from a certificate and private key.",
 		Attributes: map[string]schema.Attribute{
 			"cert_pem": schema.StringAttribute{
 				Description: "The certificate in PEM format.",
@@ -63,6 +63,15 @@ func (e *ephemeralPkcs12Nopass) Schema(_ context.Context, _ ephemeral.SchemaRequ
 				Description: "Version of the write-only private key.",
 				Optional:    true,
 			},
+			"password": schema.StringAttribute{
+				Description: "The password for the PKCS12 file.",
+				Optional:    true,
+				Sensitive:   true,
+			},
+			"ca_pem": schema.StringAttribute{
+				Description: "CA Certificate in PEM format.",
+				Optional:    true,
+			},
 			"result": schema.StringAttribute{
 				Description: "The base64 encoded PKCS12 file.",
 				Computed:    true,
@@ -73,12 +82,14 @@ func (e *ephemeralPkcs12Nopass) Schema(_ context.Context, _ ephemeral.SchemaRequ
 }
 
 // Open calculates the ephemeral resource state.
-func (e *ephemeralPkcs12Nopass) Open(ctx context.Context, req ephemeral.OpenRequest, resp *ephemeral.OpenResponse) {
+func (e *ephemeralPkcs12) Open(ctx context.Context, req ephemeral.OpenRequest, resp *ephemeral.OpenResponse) {
 	var config struct {
 		CertPem                 types.String `tfsdk:"cert_pem"`
 		PrivateKeyPem           types.String `tfsdk:"private_key_pem"`
 		PrivateKeyPemWO         types.String `tfsdk:"private_key_pem_wo"`
 		PrivateKeyPemWOVersion  types.String `tfsdk:"private_key_pem_wo_version"`
+		Password                types.String `tfsdk:"password"`
+		CaPem                   types.String `tfsdk:"ca_pem"`
 		Result                  types.String `tfsdk:"result"`
 	}
 
@@ -142,9 +153,25 @@ func (e *ephemeralPkcs12Nopass) Open(ctx context.Context, req ephemeral.OpenRequ
 		return
 	}
 
+	// Decode CA Certificate if provided
+	var caCerts []*x509.Certificate
+	if !config.CaPem.IsNull() && !config.CaPem.IsUnknown() {
+		caBlock, _ := pem.Decode([]byte(config.CaPem.ValueString()))
+		if caBlock != nil {
+			caCert, err := x509.ParseCertificate(caBlock.Bytes)
+			if err == nil {
+				caCerts = append(caCerts, caCert)
+			}
+		}
+	}
+
 	// Generate PKCS12
-	// Using empty password as requested for "nopass" scenario
-	pfxData, err := pkcs12.Encode(rand.Reader, privateKey, cert, nil, "")
+	password := ""
+	if !config.Password.IsNull() && !config.Password.IsUnknown() {
+		password = config.Password.ValueString()
+	}
+
+	pfxData, err := pkcs12.Encode(rand.Reader, privateKey, cert, caCerts, password)
 	if err != nil {
 		resp.Diagnostics.AddError("Error encoding PKCS12", fmt.Sprintf("Could not encode PKCS12: %v", err))
 		return

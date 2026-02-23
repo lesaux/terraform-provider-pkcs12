@@ -53,5 +53,6 @@ func (p *pkcs12Provider) Resources(_ context.Context) []func() resource.Resource
 func (p *pkcs12Provider) EphemeralResources(_ context.Context) []func() ephemeral.EphemeralResource {
 	return []func() ephemeral.EphemeralResource{
 		NewEphemeralPkcs12Nopass,
+		NewEphemeralPkcs12,
 	}
 }

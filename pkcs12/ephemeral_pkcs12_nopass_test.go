@@ -16,7 +16,7 @@ func TestAccEphemeralPkcs12Nopass_basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `
-ephemeral "pkcs12_nopass" "test" {
+ephemeral "pkcs12_nopass_from_pem" "test" {
   cert_pem = <<EOT
 ` + string(certificateExample) + `
 EOT
@@ -26,7 +26,7 @@ EOT
 }
 
 output "result" {
-  value = ephemeral.pkcs12_nopass.test.result
+  value = ephemeral.pkcs12_nopass_from_pem.test.result
   sensitive = true
 }
 `,
@@ -44,7 +44,7 @@ func TestAccEphemeralPkcs12Nopass_privateKeyPemWo(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `
-ephemeral "pkcs12_nopass" "test" {
+ephemeral "pkcs12_nopass_from_pem" "test" {
   cert_pem = <<EOT
 ` + string(certificateExample) + `
 EOT
@@ -55,7 +55,7 @@ EOT
 }
 
 output "result" {
-  value = ephemeral.pkcs12_nopass.test.result
+  value = ephemeral.pkcs12_nopass_from_pem.test.result
   sensitive = true
 }
 `,
