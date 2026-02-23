@@ -3,31 +3,55 @@ package pkcs12
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 )
 
-// Provider -
-func Provider() *schema.Provider {
-	return &schema.Provider{
-		Schema: map[string]*schema.Schema{},
+// Ensure the implementation satisfies the expected interfaces.
+var (
+	_ provider.Provider = &pkcs12Provider{}
+)
 
-		ResourcesMap: map[string]*schema.Resource{
-			"pkcs12_from_pem":        resourcePkcs12(),
-			"pkcs12_nopass_from_pem": resourcePkcs12Nopass(),
-		},
-		DataSourcesMap:       map[string]*schema.Resource{},
-		ConfigureContextFunc: providerConfigure,
+// New is a helper function to simplify provider server and testing implementation.
+func New() provider.Provider {
+	return &pkcs12Provider{}
+}
+
+// pkcs12Provider is the provider implementation.
+type pkcs12Provider struct{}
+
+// Metadata returns the provider type name.
+func (p *pkcs12Provider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
+	resp.TypeName = "pkcs12"
+}
+
+// Schema defines the provider-level schema for configuration data.
+func (p *pkcs12Provider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
+	resp.Schema = schema.Schema{}
+}
+
+// Configure prepares a pkcs12Provider for data sources and resources.
+func (p *pkcs12Provider) Configure(_ context.Context, _ provider.ConfigureRequest, _ *provider.ConfigureResponse) {
+}
+
+// DataSources defines the data sources implemented in the provider.
+func (p *pkcs12Provider) DataSources(_ context.Context) []func() datasource.DataSource {
+	return []func() datasource.DataSource{}
+}
+
+// Resources defines the resources implemented in the provider.
+func (p *pkcs12Provider) Resources(_ context.Context) []func() resource.Resource {
+	return []func() resource.Resource{
+		NewPkcs12FromPemResource,
 	}
 }
 
-func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-	// diags = append(diags, diag.Diagnostic{
-	// 	Severity: diag.Warning,
-	// 	Summary:  "Warning Message Summary",
-	// 	Detail:   "This is the detailed warning message from providerConfigure",
-	// })
-	return nil, diags
+// EphemeralResources defines the ephemeral resources implemented in the provider.
+func (p *pkcs12Provider) EphemeralResources(_ context.Context) []func() ephemeral.EphemeralResource {
+	return []func() ephemeral.EphemeralResource{
+		NewEphemeralPkcs12Nopass,
+	}
 }
