@@ -125,3 +125,23 @@ func hashForState(value string) string {
 	hash := sha1.Sum([]byte(strings.TrimSpace(value)))
 	return hex.EncodeToString(hash[:])
 }
+
+// decodeCerts decodes a certificate from a PEM formated byte array.
+// Given data must contain at least one certificate.
+// Returns the first certificate and a list of remaining CA/intermediate certificates.
+func decodeCerts(certStr []byte) (*x509.Certificate, []*x509.Certificate, error) {
+	certificates, err := decodeCertificates(certStr)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(certificates) == 0 {
+		return nil, nil, fmt.Errorf("cert_pem must contain at least one certificate")
+	}
+
+	certificate := certificates[0]
+	caListAndIntermediate := []*x509.Certificate{}
+	if len(certificates) > 1 {
+		caListAndIntermediate = certificates[1:]
+	}
+	return certificate, caListAndIntermediate, nil
+}
